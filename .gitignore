@@ -1,0 +1,8 @@
+*.dat
+*.dat.npy
+*.json
+*.txt
+*.gnu
+*.png
+*.pdf
+*.tar.gz
