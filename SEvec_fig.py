@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import re
 from fnmatch import fnmatch
+import itertools
 
 paths = './'
 pattern = "*.npy"
@@ -24,7 +25,7 @@ for path, subdirs, files in os.walk(paths):
         if key_fold in path:
             if fnmatch(name, pattern):
                 file_array.append(os.path.join(path,name))
-print(file_array)
+#print(file_array)
 regex = re.compile(r'\d+')
 
 for el in file_array:
@@ -138,12 +139,32 @@ plt.show()
 fig.savefig(filename + ".pdf", format='pdf')
 
 ################################################################
-##Printing Imag and real parts 
+##Printing Imag and real parts for pade.py
 ################################################################
 with open('self_energy.dat', 'w') as l:
     for i in range(len(w_list)):
         l.write("{0:6.5f}\t\t{1:6.5f}\t\t{2:6.5f}\t\t{3:3.2f}\n".format(w_list[i],self_array_re[i],self_array_im[i],mu_list[MU]))
 
 l.close()
+
+################################################################
+##Quasiparticle weight computation
+################################################################
+anal_cont_data = np.loadtxt('analytic_continuation_self_energy.dat')
+def eps(kx: float, ky: float, t: float = 1.0, tp: float = -0.3, tpp: float = 0.2) -> float:
+    coskx = np.cos(kx)
+    cosky = np.cos(ky)
+    return(-2.0*t*(coskx + cosky) - 2.0*tp*(np.cos(kx+ky) + np.cos(kx-ky)) - 2.0*tpp*(np.cos(2.0*kx)+np.cos(2.0*ky)))
+
+def E_rel(omega: float, kx: float, ky: float, ReSigma: float) -> float:
+    return(omega - eps(kx,ky) - ReSigma)
+
+grid = 200
+kx = np.linspace(-np.pi,np.pi,grid)
+ky = np.linspace(np.pi,-np.pi,grid)
+k_grid = np.array(list(itertools.product(kx,ky)),dtype='float,float').reshape(grid,grid)
+
+N = len(anal_cont_data[:,0])
+peak_E = np.zeros((N,),dtype=float)
 
 
