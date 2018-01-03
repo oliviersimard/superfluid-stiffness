@@ -31,6 +31,7 @@ data_file_s_header = data_file_s[1,:]
 #    ind+=1
 #    index=ind
 #end
+setlevel!(logger, "info")
 info(logger, "Reading relevant data from averages*.dat files")
 indmu_s = find(x->x=="mu",data_file_s_header)
 inddop_s = find(x->x=="ave_mu",data_file_s_header)
@@ -83,6 +84,7 @@ datap_h = hcat(data_file_mu,data_file_dop)
 super_datap = vcat(datap_h,datap_s_h)
 super_data_M = vcat(data_file_M,data_file_s_M)
 
+setlevel!(logger, "info")
 info(logger, "Reading SEvec*.dat.npy files obtained from qcm")
 list_of_files = glob(string(path_to_files[2],pattern))
 list_of_files_s = glob(string(path_to_files[1],pattern))
@@ -99,8 +101,8 @@ for files in list_of_files_s
     push!(list_num_s,m.match)
 end
 
-map!(x->parse(Int64,x),list_num)
-map!(x->parse(Int64,x),list_num_s)
+map!(x->parse(Int64,x),list_num,list_num)
+map!(x->parse(Int64,x),list_num_s,list_num_s)
 zip_num_files = collect(zip(list_num,list_of_files))
 zip_num_files_s = collect(zip(list_num_s,list_of_files_s))
 sort!(zip_num_files)
@@ -127,12 +129,14 @@ end
 super_list_SEvec_c = vcat(list_SEvec_c, list_SEvec_c_s)
 super_list_t_mu = vcat(list_t_mu,list_t_mu_s)
 
+setlevel!(logger, "info")
 info(logger, "Entering decision loop regarding if NOCOEX or COEX. Integration over BZ or RBZ")
 m1 = match(r"^(.*?)(?=/)",params["data_loop"][1])
 m2 = match(r"^(.*?)(?=/)",params["data_loop"][2])
 M_mean_field_tol = 1e-5
 list_kIntegral_stiff = []
 if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
+    setlevel!(logger, "notice")
     notice(logger, "Entered loop with NOCOEX and AFM_SC_NOCOEX = 1")
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
@@ -140,7 +144,8 @@ if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
         println(size(list_kIntegral_stiff[l]))
     end
 else
-    print_with_color(:red, "AFM_SC_NOCOEX option set to 0")
+    print_with_color(:red, "AFM_SC_NOCOEX option set to 0\n")
+    setlevel!(logger, "notice")
     notice(logger, "AFM_SC_NOCOEX option set to 0")
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
@@ -156,6 +161,7 @@ else
         println(size(list_kIntegral_stiff[l]))
     end
 end
+setlevel!(logger, "info")
 info(logger, "Summation in frequency (beta = 50)")
 stiffness = []
 for j in 1:size(list_kIntegral_stiff)[1]-1
@@ -172,7 +178,8 @@ mu_dop_stiff = hcat(super_datap[1:length(stiffness),1],super_datap[1:length(stif
 println("Stiffness = ", mu_dop_stiff)
 writedlm(fout_name, mu_dop_stiff, "\t\t")
 
-info(logger, "Program exited")
+setlevel!(logger, "warn")
+warn(logger, "Program exited")
 
 #ll=[]
 #for dop in collect(zip(list_mu,list_dop))
