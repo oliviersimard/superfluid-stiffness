@@ -111,7 +111,7 @@ super_list_t_mu = vcat(list_t_mu,list_t_mu_s)
 list_kIntegral_stiff = []
 for l in 1:length(super_list_t_mu)
     modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
-    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))#Change kintegrand if COEX or NOCOEX
+    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))#Change kintegrand if COEX or NOCOEX
     println(size(list_kIntegral_stiff[l]))
 end
 
