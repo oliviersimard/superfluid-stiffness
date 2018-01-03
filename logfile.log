@@ -1,0 +1,38 @@
+29-Dec 13:19:52:DEBUG:root:debug message
+29-Dec 13:19:52:INFO:root:info message
+29-Dec 13:19:52:WARNING:root:warning message
+29-Dec 13:19:52:ERROR:root:error message
+29-Dec 13:19:52:CRITICAL:root:critical message
+29-Dec 13:29:09:INFO:root:Cloning Logging from https://github.com/kmsquire/Logging.jl.git
+29-Dec 13:29:10:INFO:root:Computing changes...
+29-Dec 13:29:13:INFO:root:No packages to install, update or remove
+29-Dec 13:29:22:INFO:root:Cloning Mocha from https://github.com/pluskid/Mocha.jl.git
+29-Dec 13:29:24:INFO:root:Computing changes...
+29-Dec 13:29:25:INFO:root:Cloning cache of Blosc from https://github.com/stevengj/Blosc.jl.git
+29-Dec 13:29:26:INFO:root:Cloning cache of HDF5 from https://github.com/JuliaIO/HDF5.jl.git
+29-Dec 13:29:27:INFO:root:Cloning cache of JLD from https://github.com/JuliaIO/JLD.jl.git
+29-Dec 13:29:28:INFO:root:Cloning cache of LegacyStrings from https://github.com/JuliaArchive/LegacyStrings.jl.git
+29-Dec 13:29:29:INFO:root:Cloning cache of Memento from https://github.com/invenia/Memento.jl.git
+29-Dec 13:29:29:INFO:root:Cloning cache of Syslogs from https://github.com/invenia/Syslogs.jl.git
+29-Dec 13:29:30:INFO:root:Installing Blosc v0.3.0
+29-Dec 13:29:30:INFO:root:Installing HDF5 v0.8.8
+29-Dec 13:29:30:INFO:root:Installing JLD v0.8.3
+29-Dec 13:29:30:INFO:root:Installing LegacyStrings v0.3.0
+29-Dec 13:29:30:INFO:root:Installing Memento v0.5.0
+29-Dec 13:29:30:INFO:root:Installing Syslogs v0.0.1
+29-Dec 13:29:43:INFO:root:Package database updated
+29-Dec 13:29:58:INFO:root:Cloning Mocha from https://github.com/pluskid/Mocha.jl.git
+29-Dec 13:31:52:INFO:root:Cloning Mocha from https://github.com/pluskid/Mocha.jl.git
+29-Dec 13:31:54:INFO:root:Computing changes...
+29-Dec 13:31:56:INFO:root:No packages to install, update or remove
+29-Dec 13:32:03:INFO:root:Precompiling module Memento.
+29-Dec 13:32:11:INFO:root:Precompiling module HDF5.
+29-Dec 13:32:48:INFO:root:Updating METADATA...
+29-Dec 13:32:50:INFO:root:Cloning cache of Mocha from https://github.com/pluskid/Mocha.jl.git
+29-Dec 13:32:52:INFO:root:Updating Mocha master...
+29-Dec 13:32:53:INFO:root:Updating Logging master...
+29-Dec 13:32:53:WARNING:root:Package StiffSquare2: skipping update (dirty)...
+29-Dec 13:32:53:INFO:root:Computing changes...
+29-Dec 13:32:53:INFO:root:No packages to install, update or remove
+29-Dec 13:33:05:INFO:root:Package Mocha is already installed
+29-Dec 13:40:53:INFO:root:Here's some info.
