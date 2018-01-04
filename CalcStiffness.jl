@@ -140,7 +140,7 @@ if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
     notice(logger, "Entered loop with NOCOEX and AFM_SC_NOCOEX = 1")
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
-        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test)) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
+        push!(list_kIntegral_stiff,0.25*(PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
         println(size(list_kIntegral_stiff[l]))
     end
 else
