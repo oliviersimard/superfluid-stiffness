@@ -80,8 +80,8 @@ for files in list_of_files_s
     push!(list_num_s,m.match)
 end
 
-map!(x->parse(Int64,x),list_num)
-map!(x->parse(Int64,x),list_num_s)
+map!(x->parse(Int64,x),list_num,list_num)
+map!(x->parse(Int64,x),list_num_s,list_num_s)
 zip_num_files = collect(zip(list_num,list_of_files))
 zip_num_files_s = collect(zip(list_num_s,list_of_files_s))
 sort!(zip_num_files)
@@ -111,7 +111,7 @@ super_list_t_mu = vcat(list_t_mu,list_t_mu_s)
 list_kIntegral_stiff = []
 for l in 1:length(super_list_t_mu)
     modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
-    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))#Change kintegrand if COEX or NOCOEX
+    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))#Change kintegrand if COEX or NOCOEX
     println(size(list_kIntegral_stiff[l]))
 end
 
