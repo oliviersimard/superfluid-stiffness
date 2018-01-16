@@ -12,8 +12,9 @@ path_to_files = params["path_to_files"]
 pattern = params["pattern"]
 beta = params["beta"]
 fout_name = params["fout_name"]
+print_mu_dop = params["Print_mu_dop"]
 AFM_SC_NOCOEX = params["AFM_SC_NOCOEX"] ## Set to 1 if using AFM_SC function to evaluate NOCOEX data. Set to 0
-                                         # if not.
+w_discretization = params["w_discretization"]  # if not.
 
 print_with_color(:green, "Setting parameters for log file\n")
 
@@ -82,6 +83,10 @@ datap_h = hcat(data_file_mu,data_file_dop)
 #datap_h_sorted = sort(datap_h,1; alg=MergeSort)
 #println(datap_new_h_sorted)
 super_datap = vcat(datap_h,datap_s_h)
+if print_mu_dop == 1
+    writedlm("stiffness.dat", super_datap, "\t\t")
+    exit(0)
+end
 super_data_M = vcat(data_file_M,data_file_s_M)
 
 setlevel!(logger, "info")
@@ -108,7 +113,7 @@ zip_num_files_s = collect(zip(list_num_s,list_of_files_s))
 sort!(zip_num_files)
 sort!(zip_num_files_s)
 
-zvec = 1.0im*[(2*n+1)*pi/beta for n in 1:400]
+zvec = 1.0im*[(2*n+1)*pi/beta for n in 1:w_discretization]
 
 list_SEvec_c = []
 list_t_mu = []
@@ -133,6 +138,7 @@ setlevel!(logger, "info")
 info(logger, "Entering decision loop regarding if NOCOEX or COEX. Integration over BZ or RBZ")
 m1 = match(r"^(.*?)(?=/)",params["data_loop"][1])
 m2 = match(r"^(.*?)(?=/)",params["data_loop"][2])
+println("Printing m1 and m2 : ", m1, m2)
 M_mean_field_tol = 1e-5
 list_kIntegral_stiff = []
 if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
@@ -140,7 +146,7 @@ if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
     notice(logger, "Entered loop with NOCOEX and AFM_SC_NOCOEX = 1")
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
-        push!(list_kIntegral_stiff,0.25*(PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
+        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test)) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
         println(size(list_kIntegral_stiff[l]))
     end
 else
@@ -149,10 +155,10 @@ else
     notice(logger, "AFM_SC_NOCOEX option set to 0")
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
-        if ismatch(r"N[\w]*X",params["data_loop"][1]) && ismatch(r"N[\w]*X",params["data_loop"][2]) || error("Both averages*.dat must come whether from NOCOEX or COEX folders") 
+        if ismatch(r"N[\w]*X",params["data_loop"][1]) && ismatch(r"N[\w]*X",params["data_loop"][2])  
             push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))#Change kintegrand if COEX or NOCOEX
         elseif ismatch(r"^C[\w]*X",params["data_loop"][1]) && ismatch(r"^C[\w]*X",params["data_loop"][2]) || error("Both averages*.dat must come whether from NOCOEX or COEX folders")
-            if abs(super_data_M)>M_mean_field_tol
+	 if abs(super_data_M[l])>M_mean_field_tol
                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
             else 
                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
@@ -162,7 +168,7 @@ else
     end
 end
 setlevel!(logger, "info")
-info(logger, "Summation in frequency (beta = 50)")
+info(logger, "Summation in frequency beta = $(@sprintf("%.2f", beta))")
 stiffness = []
 for j in 1:size(list_kIntegral_stiff)[1]-1
     stiffness_tmp = 0.0
@@ -171,9 +177,10 @@ for j in 1:size(list_kIntegral_stiff)[1]-1
         #push!(stiffness_tmp, 0.5 * (list_kIntegral_stiff[j][ii, 2] + list_kIntegral_stiff[j][ii+1, 2]) * (list_kIntegral_stiff[j][ii+1, 1] - list_kIntegral_stiff[j][ii, 1]) / (2.0*pi))
     end
     push!(stiffness,(1/beta)*real(stiffness_tmp))
+    println((1/beta)*imag(stiffness_tmp))
 end
 
-stiffness*=2 #For the spin projections
+#stiffness*=2 #For the spin projection ##Eventually include this directly in calcintegral_BZ and calcintegral_RBZ
 mu_dop_stiff = hcat(super_datap[1:length(stiffness),1],super_datap[1:length(stiffness),2],stiffness)
 println("Stiffness = ", mu_dop_stiff)
 writedlm(fout_name, mu_dop_stiff, "\t\t")
