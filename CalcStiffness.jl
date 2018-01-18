@@ -4,6 +4,10 @@ using Glob
 using Memento
 using StiffSquare2.PeriodizeSC
 
+if isfile("./Julia.log")
+    rm("./Julia.log")
+end
+
 print_with_color(:green, "Extracting info from params.json\n")
 
 paramsfile = "params.json"
@@ -147,6 +151,7 @@ if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
         push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test)) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
+        #push!(list_kIntegral_stiff,2.0*PeriodizeSC.sum_RBZ(modelvec))
         println(size(list_kIntegral_stiff[l]))
     end
 else
@@ -157,6 +162,7 @@ else
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
         if ismatch(r"N[\w]*X",params["data_loop"][1]) && ismatch(r"N[\w]*X",params["data_loop"][2])  
             push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))#Change kintegrand if COEX or NOCOEX
+            #push!(list_kIntegral_stiff,PeriodizeSC.sum_RBZ(modelvec))
         elseif ismatch(r"^C[\w]*X",params["data_loop"][1]) && ismatch(r"^C[\w]*X",params["data_loop"][2]) || error("Both averages*.dat must come whether from NOCOEX or COEX folders")
 	 if abs(super_data_M[l])>M_mean_field_tol
                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
