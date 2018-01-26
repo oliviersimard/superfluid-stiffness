@@ -19,6 +19,7 @@ print_mu_dop = params["Print_mu_dop"]
 AFM_SC_NOCOEX = params["AFM_SC_NOCOEX"] ## Set to 1 if using AFM_SC function to evaluate NOCOEX data. Set to 0
 w_discretization = params["w_discretization"]  # if not.
 DOS = params["DOS"]
+cumulant = params["cumulant"]
 
 if DOS == 1
     fout_name = params["fout_name_DOS"]
@@ -147,6 +148,26 @@ end
 super_list_SEvec_c = vcat(list_SEvec_c, list_SEvec_c_s)
 super_list_t_mu = vcat(list_t_mu,list_t_mu_s)
 
+####################################################################################################################
+##Verifying input validity##########################################################################################
+####################################################################################################################
+setlevel!(logger,"notice")
+if cumulant == 1
+    notice(logger, "Cumulant set to 1: only methods to compute superfluid stiffness exist")
+elseif cumulant == 0
+    notice(logger, "Cumulant set to 0")
+else
+    throw(ErrorException("Cumulant takes in 0 or 1 as arguments"))
+end
+
+if DOS == 1
+    notice(logger, "DOS set to 1")
+elseif DOS == 0
+    notice(logger, "DOS set to 0")
+else
+    throw(ErrorException("DOS takes in 0 or 1 as arguments"))
+end
+####################################################################################################################
 setlevel!(logger, "info")
 info(logger, "Entering decision loop regarding if NOCOEX or COEX. Integration over BZ or RBZ")
 m1 = match(r"^(.*?)(?=/)",params["data_loop"][1])
@@ -160,18 +181,18 @@ if m1.match == "NOCOEX" && m2.match == "NOCOEX" && AFM_SC_NOCOEX == 1
     notice(logger, "Entered loop with NOCOEX and AFM_SC_NOCOEX = 1")
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
-        if DOS == 1
-            setlevel!(logger, "notice")
-            notice(logger, "DOS set to 1")
-            #push!(list_kIntegral_DOS,0.5*PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_coex))
-            push!(list_kIntegral_DOS,0.5*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=75))
-            println(size(list_kIntegral_DOS[l]))
-        elseif DOS == 0
-            setlevel!(logger, "notice")
-            notice(logger, "DOS set to 0")
-            #push!(list_kIntegral_stiff,0.5*PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test)) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
-            push!(list_kIntegral_stiff,0.5*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_test,gridK=75))
-            println(size(list_kIntegral_stiff[l]))
+        if cumulant == 1
+            push!(list_kIntegral_stiff,0.5*PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_AFM_SC))
+        elseif cumulant == 0
+            if DOS == 1
+                #push!(list_kIntegral_DOS,0.5*PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_coex))
+                push!(list_kIntegral_DOS,0.5*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=75))
+                println(size(list_kIntegral_DOS[l]))
+            elseif DOS == 0
+                #push!(list_kIntegral_stiff,0.5*PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test)) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
+                push!(list_kIntegral_stiff,0.5*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_test,gridK=75))
+                println(size(list_kIntegral_stiff[l]))
+            end
         end
     end
 else
@@ -181,43 +202,45 @@ else
     for l in 1:length(super_list_t_mu)
         modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:400], super_list_SEvec_c[l][1, 1:400, :, :])
         if ismatch(r"N[\w]*X",params["data_loop"][1]) && ismatch(r"N[\w]*X",params["data_loop"][2])
-            if DOS == 1
-	 setlevel!(logger, "notice")
-	 notice(logger, "DOS set to 1")
-                push!(list_kIntegral_DOS,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_kintegrand_DOS_k_nocoex))
-	 #push!(list_kIntegral_DOS,2.0*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_nocoex,gridK=75))
-                println(size(list_kIntegral_DOS[l]))
-            elseif DOS == 0
-	 setlevel!(logger, "notice")
-	 notice(logger, "DOS set to 0")
-                push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))#Change kintegrand if COEX or NOCOEX
-                #push!(list_kIntegral_stiff,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC,gridK=75))
-	 println(size(list_kIntegral_stiff[l]))
+            if cumulant == 1
+	 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_SC))
+            elseif cumulant == 0
+                if DOS == 1
+                    push!(list_kIntegral_DOS,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_kintegrand_DOS_k_nocoex))
+	     #push!(list_kIntegral_DOS,2.0*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_nocoex,gridK=75))
+                    println(size(list_kIntegral_DOS[l]))
+                elseif DOS == 0
+                    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))#Change kintegrand if COEX or NOCOEX
+                    #push!(list_kIntegral_stiff,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC,gridK=75))
+	     println(size(list_kIntegral_stiff[l]))
+	 end
             end
         elseif ismatch(r"^C[\w]*X",params["data_loop"][1]) && ismatch(r"^C[\w]*X",params["data_loop"][2]) || error("Both averages*.dat must come whether from NOCOEX or COEX folders")
-            if DOS == 1
-	 setlevel!(logger, "notice")
-	 notice(logger, "DOS set to 1")
+            if cumulant == 1
 	 if abs(super_data_M[l])>M_mean_field_tol
-	     push!(list_kIntegral_DOS,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_coex))
-	     #push!(list_kIntegral_DOS,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=75))
+	     push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_AFM_SC))
 	 else
-	     push!(list_kIntegral_DOS,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_nocoex))
-	     #push!(list_kIntegral_DOS,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_nocoex,gridK=75))
+	     push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_SC))
 	 end
-	 println(size(list_kIntegral_DOS[l]))
-            elseif DOS == 0
-	 setlevel!(logger, "notice")
-	 notice(logger, "DOS set to 0")
-                if abs(super_data_M[l])>M_mean_field_tol
-                    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
-                else 
-                    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))
+            elseif cumulant == 0
+                if DOS == 1
+	     if abs(super_data_M[l])>M_mean_field_tol
+	         push!(list_kIntegral_DOS,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_coex))
+	         #push!(list_kIntegral_DOS,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=75))
+	     else
+	         push!(list_kIntegral_DOS,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_nocoex))
+	         #push!(list_kIntegral_DOS,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_nocoex,gridK=75))
+	     end
+	     println(size(list_kIntegral_DOS[l]))
+                elseif DOS == 0
+                    if abs(super_data_M[l])>M_mean_field_tol
+                        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
+                    else 
+                        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))
+	     end
+	     println(size(list_kIntegral_stiff[l]))
 	 end
-	 println(size(list_kIntegral_stiff[l]))
             end
-        else
-            throw(ErrorException("Paths to SEvec*.dat.npy files must have same keyword at the beginning."))
         end        
     end
 end
