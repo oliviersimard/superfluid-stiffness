@@ -11,11 +11,11 @@ pattern = "*.npy"
 file_dict = {}
 #tt=1500 #Pay attention to these values
 tt=400
-beta=70
-key_fold1 = "./COEX/U8/SEvec/SEvec_b70_SC_AFM/SEvec_b70_SC_AFM" #folder in which the program will go fetch the data
-key_fold2 = "./COEX/U8/SEvec/SEvec_b70_SC_AFM/SEvec_b70_SC_AFM_s"
-dop_min = 0.8
-dop_max = 1.0
+beta=60
+key_fold1 = "./COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/SEvec_b60_SC_AFM" #folder in which the program will go fetch the data
+key_fold2 = "./COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/SEvec_b60_SC_AFM_s"
+dop_min = 0.9
+dop_max = 1.1
 decide_curves = 0 ## Input 1 to state that you want certain number equally-spaced sel-energy curves to be plotted
 num_curves = 1 ## Number of equally-spaced self-energy curves to be plotted
 list_dop_curves = [0,5,10,15] ## If decide_curves = 1, type in relevant curves you want to plot
@@ -31,9 +31,14 @@ for path, subdirs, files in os.walk(paths):
 regex1 = re.compile(r'(.*?)(?=_)')
 file_array_s = []
 file_array_d = file_array.copy()
+#print(file_array)
 for el in file_array:
-    if "s/SEvec" in regex1.findall(el):
+    if "s/SEvec" in regex1.findall(el):   ######Change if looking after Gvec or SEvec
         file_array_s.append(file_array_d.pop(file_array_d.index(el)))
+        boool = True
+    elif "s/Gvec" in regex1.findall(el):
+        file_array_s.append(file_array_d.pop(file_array_d.index(el)))
+        boool = False
 
 regex = re.compile(r'\d+')
 
@@ -57,7 +62,7 @@ list_im_list = []
 list_re_list = []
 
 #sorted_list = sorted(zip(list_temp,file_array))
-mu_list = np.loadtxt('NOCOEX/U8/stiffness.dat',skiprows=0,usecols=(1,))
+mu_list = np.loadtxt('COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/stiffness.dat',skiprows=0,usecols=(1,))
 i = 0
 dop_range = []
 index_range = []
@@ -73,7 +78,7 @@ for i, path_to_files in enumerate(list_temp_tot):
         file_dict[i] = np.load(path_to_files[1])
         imag_SEpart = []
         real_SEpart = []
-        #print("file_dict shape = ", file_dict[0].shape[1])
+        #print("file_dict shape = ", file_dict.shape)
         for j in range(file_dict[i].shape[1]):
             imag_SEpart.append(np.imag(file_dict[i][0,j,0,0]).tolist()) #Change the element taken from self-energy with numbers after j
             real_SEpart.append(np.real(file_dict[i][0,j,0,0]).tolist())
@@ -84,16 +89,22 @@ for i, path_to_files in enumerate(list_temp_tot):
 list_im_list = np.asarray(list_im_list)
 list_re_list = np.asarray(list_re_list)
 
+#print(np.asarray(np.imag(file_dict[15][0,0,:,:])).shape)
+#print(np.trace(np.asarray(np.imag(file_dict[15][0,0,:,:]).tolist())))
 #print("lengths of list_im_list and list_re_list = ", list_im_list[0][:,1]," and \n\n",list_re_list[0][:,1])
 
-filename = "IM_vs_RE_00_GF_COEX_U8_beta_70_w_400"#_%.5f"%(-1.0*(mu_list[MU]-1.0)) #Change the chemical potential here
+filename = "IM_vs_RE_00_GF_NOCOEX_U8_beta_70_w_200"#_%.5f"%(-1.0*(mu_list[MU]-1.0)) #Change the chemical potential here
 
 fig = plt.figure()
 
 ax = plt.subplot(211)
 
 #xlabel = (r"$\omega$")
-ylabel = (r"Im$\Sigma_{00}$"r"$\left(\omega\right)$")
+if boool:
+    ylabel = (r"Im$\Sigma_{00}$"r"$\left(\omega\right)$")
+else:
+    ylabel = (r"ImG$_{00}$"r"$\left(\omega\right)$")
+
 bbox_props = dict(boxstyle="square,pad=0.3", fc="yellow", ec="b", lw=2) #used for the box of text in plot
 #box = ax.get_position()
 #ax.set_position([box.x0, box.y0 + box.height*0.1, box.width, box.height*0.9]) #WHEN ONLY PLOTTING ONE GRAPH' UNCOMMENT THESE LINES
@@ -121,15 +132,29 @@ for self_array_im in list_self_array_im:
     #ax.plot(w_list, self_array_re, linestyle="-", marker='o', markersize=3, linewidth=2, color='green', label='Re')
     ax.plot(w_list, self_array_im[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color))
 
-plt.xlim([-0.01,30.01])
-plt.xticks(np.arange(0,31,1))#, rotation='vertical')
-plt.title(r"Self-energy $\omega$-dependence at fixed doping for $\beta = 70$") # at  " r"$\mu=%.2f$"%mu[0][0])
+if tt == 400:
+    plt.xlim([-0.01,30.01])
+    plt.xticks(np.arange(0,31,1))#, rotation='vertical')
+elif tt == 200:
+    plt.xlim([-0.01,18.01])
+    plt.xticks(np.arange(0,19,1))
+else:
+    raise ValueError('Should only have a grid of 200 or 400 Matsubara frequencies')
+
+if boool:
+    plt.title(r"Self-energy $\omega$-dependence at fixed doping for $\beta = {0:2.2f}$".format(beta)) # at  " r"$\mu=%.2f$"%mu[0][0])
+else:
+    plt.title(r"Green's function $\omega$-dependence at fixed doping for $\beta = {0:2.2f}$".format(beta))
 
 ##############################################################
 ax2 = plt.subplot(212) #ELIMINATE THIS SUBPLOT TO HAVE ONLY ONE GRAPH
 
 xlabel = (r"$i\omega$")
-ylabel = (r"Re$\Sigma_{00}$"r"$\left(\omega\right)$")
+
+if boool:
+    ylabel = (r"Re$\Sigma_{00}$"r"$\left(\omega\right)$")
+else:
+    ylabel = (r"ReG$_{00}$"r"$\left(\omega\right)$")
 
 plt.xlabel(xlabel, fontsize=15)
 plt.ylabel(ylabel, fontsize=15)
@@ -156,25 +181,49 @@ for dop,self_array_re in list_self_array_re:
 
 ax2.legend(loc='upper center', bbox_to_anchor=(0.5,-0.2), fancybox=True, shadow=True, ncol=12)
 
-plt.xlim([-0.01,30.01])
-plt.xticks(np.arange(0,31,1))#, rotation='vertical')
+if tt == 400:
+    plt.xlim([-0.01,30.01])
+    plt.xticks(np.arange(0,31,1))#, rotation='vertical')
+elif tt == 200:
+    plt.xlim([-0.01,18.01])
+    plt.xticks(np.arange(0,19,1))
+else:
+    raise ValueError('Should only have a grid of 200 or 400 Matsubara frequencies')
 
 plt.show()
 fig.savefig(filename + ".pdf", format='pdf')
 
-"""
+dop_list = [dop for dop,self_array_re in list_self_array_re]
+self_array_re_list = [self_array_re for dop,self_array_re in list_self_array_re]
+#dop_self_array_re_list = np.vstack((dop_list,self_array_re_list))
+print(len(w_list),len(self_array_re_list[3][:,0]))
 ################################################################
 ##Printing Imag and real parts for pade.py
 ################################################################
-with open('self_energy.dat', 'w') as l:
-    for i in range(len(w_list)):
-        l.write("{0:6.5f}\t\t{1:6.5f}\t\t{2:6.5f}\t\t{3:3.2f}\n".format(w_list[i],self_array_re[i],self_array_im[i],mu_list[]))
+doping_indice = 30 ##Doping value for coexistence
+#doping_indice = 68  ###Doping value for no coexistence
+print("Doping is {0:1.6f}".format(dop_list[doping_indice]))
+if boool:
+    with open('self_energy.dat', 'w') as l:
+        for i in range(len(w_list)):
+            l.write("{0:6.5f}\t\t{1:6.5f}\t\t{2:6.5f}\t\t{3:3.2f}\n".format(self_array_re_list[doping_indice][i,0],self_array_re_list[doping_indice][i,1],list_self_array_im[doping_indice][i,1],dop_list[doping_indice]))
+else:
+    with open('green_function.dat', 'w') as l:
+        for i in range(len(w_list)):
+            l.write("{0:6.5f}\t\t{1:6.5f}\t\t{2:6.5f}\t\t{3:3.2f}\n".format(self_array_re_list[doping_indice][i,0],self_array_re_list[doping_indice][i,1],list_self_array_im[doping_indice][i,1],dop_list[doping_indice]))
 
 l.close()
 ################################################################
 ##Quasiparticle weight computation
 ################################################################
 
+def Quasiparticle_weigth(w_0:float,self_im_w_0) -> float:
+    im_sigma_w_0 = 1/4*np.trace(self_im_w_0)
+    Z = 1/(1-im_sigma_w_0/w_0)
+    return Z
+
+print("Quasiparticle weigth = ",Quasiparticle_weigth(w_list[0],np.asarray(np.imag(file_dict[doping_indice][0,0,:,:]))))
+"""
 anal_cont_data = np.loadtxt('analytic_continuation_self_energy.dat')
 def eps(kx: float, ky: float, t: float = 1.0, tp: float = -0.3, tpp: float = 0.2) -> float:
     coskx = np.cos(kx)

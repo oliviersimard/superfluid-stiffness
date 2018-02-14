@@ -1,6 +1,6 @@
-[info | Main]: Reading relevant data from averages*.dat files
+[info | Main]: Reading relevant data from averages*.dat or Loop*.dat files
 [info | Main]: Reading SEvec*.dat.npy files obtained from qcm
-[notice | Main]: Cumulant set to 1: only methods to compute superfluid stiffness exist
+[notice | Main]: Cumulant set to 0
 [notice | Main]: DOS set to 0
 [info | Main]: Entering decision loop regarding if NOCOEX or COEX. Integration over BZ or RBZ
-[notice | Main]: AFM_SC_NOCOEX option set to 0
+[notice | Main]: Periodization option set to 0
