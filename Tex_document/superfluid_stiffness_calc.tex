@@ -1,0 +1,30 @@
+\documentclass[a4paper, 11pt]{article}
+
+\usepackage[english]{babel}   % Titres de section et césures en français
+\usepackage[utf8]{inputenc}  % Prend en charge les accents dans le .tex
+\usepackage[T1]{fontenc}     % Prend en charge les accents dans le .pdf
+
+\usepackage{float} % pour les commande speciale sur les figures
+
+\usepackage{amsmath,amsfonts, amssymb, amsthm}  % pour que les formules mathematiques fonctionnent
+
+\usepackage{pifont} %ajout de symboles pour les bullets
+\usepackage[sc]{mathpazo} % Use the Palatino font
+\usepackage{dsfont} %pour utilisation accrue de fontes
+
+\usepackage{placeins} % pour enpecher les graphique de se promener
+\usepackage{wrapfig} % pour la possibilite de wraper des figure dans le texte
+\usepackage{dcolumn}  % pour centrer les cases selon la décimale
+\usepackage{graphicx} % pour inserer des graphiques
+
+\begin{document}
+
+\begin{figure}[H]
+\begin{center}
+\caption{\small Illustration de $\Gamma_{ab}$ avec corrections de vertex.}
+\includegraphics[clip=true,trim=3cm 0cm 3cm 2cm, width=1\textwidth, height=1.2\textwidth]{images/IM_vs_RE_00_GF_NOCOEX_U8_beta_30_w_400.pdf}
+\label{fig:superfluid_stiffness:superfluid_stiffness_with_vertex_corrections}	
+\end{center}
+\end{figure}
+
+\end{document}
