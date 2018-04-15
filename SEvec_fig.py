@@ -12,17 +12,18 @@ pattern = "*.npy"
 file_dict = {}
 #tt=1500 #Pay attention to these values
 tt=200
-beta=70
-key_fold1 = "./NOCOEX/U12/SEvec/w_200/SEvec_b70_SC"#/SEvec_b70_SC" #folder in which the program will go fetch the data
-key_fold2 = "./COEX/U8/DOS/w_400/DOS_b70_SC_AFM/DOS_b70_SC_AFM_s"
-same_repository = True ##Very important to change for file loading
-dop_min = 0.9
-dop_max = 1.1
-decide_curves = 0 ## Input 1 to state that you want certain number equally-spaced sel-energy curves to be plotted
+U=8
+beta=60
+key_fold1 = "./COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/SEvec_b60_SC_AFM"#/SEvec_b60_SC_AFM"#/SEvec_b70_SC" #folder in which the program will go fetch the data
+key_fold2 = "./COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/SEvec_b60_SC_AFM_s"
+same_repository = False ##Very important to change for file loading
+dop_min = 0.8
+dop_max = 1.2
+decide_curves = 0 ## Input 1 to state that you want certain number equally-spaced self-energy curves to be plotted
 num_curves = 1 ## Number of equally-spaced self-energy curves to be plotted
 list_dop_curves = [0,5,10,20] ## If decide_curves = 1, type in relevant curves you want to plot
 w_list = [(2*n+1)*np.pi/beta for n in range(tt)]
-#w_list = [x for x in np.linspace(-10,10,tt)]
+#w_list = [x for x in np.linspace(-10,10,tt)] ###For DOS plots
 
 file_array=[]
 for path, subdirs, files in os.walk(paths):
@@ -31,9 +32,10 @@ for path, subdirs, files in os.walk(paths):
             if fnmatch(name, pattern):
                 file_array.append(os.path.join(path,name))
 
-#print("file_array : ", file_array, "\n\n")
+print("file_array : ", file_array, "\n\n")
 regex1 = re.compile(r'(.*?)(?=_)')
 regex2 = re.compile(r'(.*?)(?=/)')
+print("regex2",regex2.findall(file_array[0]))
 file_array_s = []
 file_array_d = file_array.copy()
 if same_repository:
@@ -66,6 +68,7 @@ if same_repository:
         list_temp_tot = [list(a) for a in zip(list_temp,file_array)]
         list_temp_tot.sort()
         list_temp_tot = np.asarray(list_temp_tot)
+        print("list_temp_tot",list_temp_tot)
 else:
     for el in file_array:
         if "s/SEvec" in regex1.findall(el):   ######Change if looking after Gvec or SEvec
@@ -103,9 +106,11 @@ list_im_list = []
 list_re_list = []
 list_DoS_1_list = []
 list_DoS_2_list = []
+list_im_winf = []
+list_re_winf = []
 
 #sorted_list = sorted(zip(list_temp,file_array))
-mu_list = np.loadtxt('NOCOEX/U12/SEvec/w_200/SEvec_b70_SC/stiffness.dat',skiprows=0,usecols=(1,))
+mu_list = np.loadtxt('COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/stiffness.dat',skiprows=0,usecols=(1,))
 i = 0
 dop_range = []
 index_range = []
@@ -133,27 +138,43 @@ else:
             file_dict[i] = np.load(path_to_files[1])
             imag_SEpart = []
             real_SEpart = []
-            #print("file_dict shape = ", file_dict.shape)
+            if 'COEX' in regex2.findall(file_array[0]):
+                #print("Length list", len(file_dict[i][0,:,0,0].tolist()))
+                list_im_winf.append(np.imag(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
+                list_re_winf.append(np.real(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
+            elif 'NOCOEX' in regex2.findall(file_array[0]):
+                list_im_winf.append(np.imag(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
+                list_re_winf.append(np.real(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
+            #print("list_im_list_winf and list_re_list_winf :", len(list_im_list_winf),"\t",len(list_re_list_winf))
+            #print("file_dict shape = ", file_dict[i].shape)
             for j in range(file_dict[i].shape[1]):
-                imag_SEpart.append(np.imag(file_dict[i][0,j,0,0]).tolist()) #Change the element taken from self-energy with numbers after j
-                real_SEpart.append(np.real(file_dict[i][0,j,0,0]).tolist())
+                if 'COEX' in regex2.findall(file_array[0]):
+                    imag_SEpart.append(np.imag(np.trace(file_dict[i][0,j,0:2,0:2])).tolist()) #Change the element taken from self-energy with numbers after j
+                    real_SEpart.append(np.real(np.trace(file_dict[i][0,j,0:2,0:2])).tolist())
+                elif 'NOCOEX' in regex2.findall(file_array[0]):
+                    imag_SEpart.append(np.imag(file_dict[i][0,j,0,0]).tolist()) #Change the element taken from self-energy with numbers after j
+                    real_SEpart.append(np.real(file_dict[i][0,j,0,0]).tolist())
             #print(list(zip(w_list,real_SEpart)))
             list_im_list.append([list(a) for a in zip(w_list,imag_SEpart)])
             list_re_list.append([list(a) for a in zip(w_list,real_SEpart)])
 
+print("winf lists:",list_im_winf,"\t",list_re_winf)
+list_im_winf = np.asarray(list_im_winf)
+list_re_winf = np.asarray(list_re_winf)
 list_im_list = np.asarray(list_im_list)
 list_re_list = np.asarray(list_re_list)
 list_DoS_1_list = np.asarray(list_DoS_1_list)
 list_DoS_2_list = np.asarray(list_DoS_2_list)
 
-print("list_DoS_1_list : ", list_DoS_1_list.shape, "\t", "list_DoS_2_list : ", list_DoS_2_list.shape)
+print("list_im_list : ", list_im_list.shape, "\t", "list_re_list : ", list_re_list.shape)
 #print(np.trace(np.asarray(np.imag(file_dict[15][0,0,:,:]).tolist())))
 #print("lengths of list_im_list and list_re_list = ", list_im_list[0][:,1]," and \n\n",list_re_list[0][:,1])
 
 #filename = "IM_vs_RE_00_GF_NOCOEX_U8_beta_70_w_200"#_%.5f"%(-1.0*(mu_list[MU]-1.0)) #Change the chemical potential here
-filename = "SEvec_NOCOEX_U12_beta_70_w_200"
+filename = "SEvec_COEX_U8_beta_60_w_400_cluster_trace_0_2"
+filename2 = "SEvec_COEX_U8_beta_60_w_400_cluster_winf_trace_0_2"
 
-fig = plt.figure()
+fig = plt.figure(1)
 
 ax = plt.subplot(211)
 
@@ -173,6 +194,7 @@ bbox_props = dict(boxstyle="square,pad=0.3", fc="yellow", ec="b", lw=2) #used fo
 plt.ylabel(ylabel, fontsize=15)
 
 dop_list_im_list = list(sorted(zip(dop_range,list_im_list), key=lambda x: x[0]))
+dop_list_im_winf = list(sorted(zip(dop_range,list_im_winf),key=lambda x: x[0]))
 dop_list_DoS_1_list = list(sorted(zip(dop_range,list_DoS_1_list), key=lambda x: x[0]))
 print("dop_list_DoS_1_list : ", len(dop_list_DoS_1_list))
 #dop_list_im_list = dop_list_im_list.sort()
@@ -188,23 +210,29 @@ if key_word=="DOS":
             list_DoS_1.append(dop_list_DoS_1_list[dop][1])
 else:
     list_self_array_im = []
+    list_self_array_im_winf = []
     if decide_curves==0:
         eq_spaced_dop = np.arange(0,len(list_im_list),num_curves)
         for dop in eq_spaced_dop:
             list_self_array_im.append(dop_list_im_list[dop][1])
+            list_self_array_im_winf.append(dop_list_im_winf[dop][1])
     elif decide_curves==1:
         for dop in list_dop_curves:
             list_self_array_im.append(dop_list_im_list[dop][1])
+            list_self_array_im_winf.append(dop_list_im_winf[dop][1])
 
 #print("list_DoS_1 : ", list_DoS_1,"\n")
 #print("list_self_array_im = ", list_self_array_im, "\n")
+list_self_array_im_winf = np.asarray(list_self_array_im_winf)
+#print("list_self_array_im_winf",list_self_array_im_winf)
 
-color = iter(plt.cm.rainbow(np.linspace(0,1,200)))
+color_im = iter(plt.cm.rainbow(np.linspace(0,1,200)))
+color_re = iter(plt.cm.rainbow(np.linspace(0,1,200)))
 color_2 = iter(plt.cm.rainbow(np.linspace(0,1,10)))
 if key_word=="DOS":
     for DoS_1 in list_DoS_1:
         if decide_curves==0:
-            ax.plot(w_list,DoS_1[:,1],linestyle="-",marker='o',markersize=3,linewidth=2,color=next(color))
+            ax.plot(w_list,DoS_1[:,1],linestyle="-",marker='o',markersize=3,linewidth=2,color=next(color_im))
         elif decide_curves==1:
             ax.plot(w_list,DoS_1[:,1],linestyle="-",marker='o',markersize=3,linewidth=2,color=next(color_2))
 else:
@@ -212,17 +240,17 @@ else:
         #print("self_array_im = ", self_array_im, "\n\n")
         #ax.plot(w_list, self_array_re, linestyle="-", marker='o', markersize=3, linewidth=2, color='green', label='Re')
         if decide_curves==0:
-            ax.plot(w_list, self_array_im[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color))
+            ax.plot(w_list, self_array_im[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_im))
         elif decide_curves==1:
             ax.plot(w_list, self_array_im[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_2))
 
 if key_word=="Not_DOS":
     if tt == 400:
-        plt.xlim([-0.01,30.01])
-        plt.xticks(np.arange(0,31,1))#, rotation='vertical')
+        plt.xlim([-0.01,41.01])
+        plt.xticks(np.arange(0,42,1))#, rotation='vertical')
     elif tt == 200:
-        plt.xlim([-0.01,18.01])
-        plt.xticks(np.arange(0,19,1))
+        plt.xlim([-0.01,21.01])
+        plt.xticks(np.arange(0,22,1))
     else:
         raise ValueError('Should only have a grid of 200 or 400 Matsubara frequencies')
 elif key_word=="DOS":
@@ -230,11 +258,11 @@ elif key_word=="DOS":
     plt.xticks(np.arange(-10,10,1))
 
 if boool and key_word=="Not_DOS":
-    plt.title(r"Self-energy $\omega$-dependence at fixed doping for $\beta = {0:2.2f}$".format(beta)) # at  " r"$\mu=%.2f$"%mu[0][0])
+    plt.title(r"Self-energy $\omega$-dependence at different dopings for $\beta = {0:2.2f}$".format(beta)) # at  " r"$\mu=%.2f$"%mu[0][0])
 elif boool and key_word=="DOS":
-    plt.title(r"DoS at fixed doping for $\beta = {0:2.2f}$".format(beta))    
+    plt.title(r"DoS at different dopings for $\beta = {0:2.2f}$".format(beta))    
 else:
-    plt.title(r"Green's function $\omega$-dependence at fixed doping for $\beta = {0:2.2f}$".format(beta))
+    plt.title(r"Green's function $\omega$-dependence at different dopings for $\beta = {0:2.2f}$".format(beta))
 
 ##############################################################
 ax2 = plt.subplot(212) #ELIMINATE THIS SUBPLOT TO HAVE ONLY ONE GRAPH
@@ -252,6 +280,7 @@ plt.xlabel(xlabel, fontsize=15)
 plt.ylabel(ylabel, fontsize=15)
 
 dop_list_re_list = list(sorted(zip(dop_range,list_re_list), key=lambda x : x[0]))
+dop_list_re_winf = list(sorted(zip(dop_range,list_re_winf),key=lambda x: x[0]))
 dop_list_DoS_2_list = list(sorted(zip(dop_range,list_DoS_2_list), key=lambda x: x[0]))
 if key_word=="DOS":
     list_DoS_2 = []
@@ -264,16 +293,21 @@ if key_word=="DOS":
             list_DoS_2.append(dop_list_DoS_2_list[dop])
 else:
     list_self_array_re = []
+    list_self_array_re_winf = []
     if decide_curves==0:
         eq_spaced_dop = np.arange(0,len(list_re_list),num_curves)
         for dop in eq_spaced_dop:
             list_self_array_re.append(dop_list_re_list[dop]) ###Not dop_list_im_list[dop][1] to include doping in list_self_array_re
+            list_self_array_re_winf.append(dop_list_re_winf[dop])
     elif decide_curves==1:
         for dop in list_dop_curves:
             list_self_array_re.append(dop_list_re_list[dop])  ###Not dop_list_im_list[dop][1] to include doping in list_self_array_re
+            list_self_array_re_winf.append(dop_list_re_winf[dop])
 
 #print("list_DoS_2 : ", list_DoS_2)
 #print("list_self_array_re = ", list_self_array_re, "\n")
+list_self_array_re_winf = np.asarray(list_self_array_re_winf)
+print("list_self_array_re_winf",list_self_array_re_winf)
 
 box = ax2.get_position()
 ax2.set_position([box.x0, box.y0 + box.height*0.1, box.width, box.height*0.9])
@@ -281,35 +315,49 @@ ax2.set_position([box.x0, box.y0 + box.height*0.1, box.width, box.height*0.9])
 if key_word=="DOS":
     for dop,DoS_2 in list_DoS_2:
         if decide_curves==0:
-            ax2.plot(w_list,DoS_2[:,1],linestyle="-",marker='o',markersize=3,linewidth=2,color=next(color),label=r"$\delta=%.5f$"%(dop))
+            ax2.plot(w_list,DoS_2[:,1],linestyle="-",marker='o',markersize=3,linewidth=2,color=next(color_re),label=r"$\delta=%.5f$"%(dop))
         elif decide_curves==1:
             ax2.plot(w_list,DoS_2[:,1],linestyle="-",marker='o',markersize=3,linewidth=2,color=next(color_2),label=r"$\delta=%.5f$"%(dop))
 else:
     for dop,self_array_re in list_self_array_re:
         if decide_curves==0:
-            ax2.plot(w_list, self_array_re[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color),label=r"$\delta=%.5f$"%(dop))#, label="Re") 
+            ax2.plot(w_list, self_array_re[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_re),label=r"$\delta=%.5f$"%(dop))#, label="Re") 
         elif decide_curves==1:
             ax2.plot(w_list, self_array_re[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_2),label=r"$\delta=%.5f$"%(dop))
 
 #plt.text(0.8, 0.8, r"$\delta=%.4f$"%(-1.0*(mu_list[MU]-1.0)), transform=ax2.transAxes, bbox=bbox_props)
 
-ax2.legend(loc='upper center', bbox_to_anchor=(0.5,-0.2), fancybox=True, shadow=True, ncol=12)
+ax2.legend(loc='upper center', bbox_to_anchor=(0.5,-0.15), fancybox=True, shadow=True, ncol=12)
 
 if key_word=="Not_DOS":
     if tt == 400:
-        plt.xlim([-0.01,30.01])
-        plt.xticks(np.arange(0,31,1))#, rotation='vertical')
+        plt.xlim([-0.01,41.01])
+        plt.xticks(np.arange(0,42,1))#, rotation='vertical')
     elif tt == 200:
-        plt.xlim([-0.01,18.01])
-        plt.xticks(np.arange(0,19,1))
+        plt.xlim([-0.01,21.01])
+        plt.xticks(np.arange(0,22,1))
     else:
         raise ValueError('Should only have a grid of 200 or 400 Matsubara frequencies')
 elif key_word=="DOS":
     plt.xlim([-10.01,10.01])
     plt.xticks(np.arange(-10,10,1))
 
+fig2 = plt.figure(2)
+
+axfig2 = plt.subplot(111)
+
+ylabel = (r"Re$\Sigma_{00}$"r"$\left(\omega\to\infty\right)$")
+xlabel = (r"doping $\delta$")
+plt.xlabel(xlabel, fontsize=15)
+plt.ylabel(ylabel, fontsize=15)
+plt.title(r"Re$\Sigma\left(\omega\to\infty\right)$ at different dopings for $\beta = {0:2.2f}$".format(beta))
+axfig2.plot(list_self_array_re_winf[:,0],list_self_array_re_winf[:,1]/U*1,linestyle="-",marker='o',markersize=3,linewidth=2,color='black')
+
 plt.show()
 fig.savefig(filename + ".pdf", format='pdf')
+fig2.savefig(filename2 + ".pdf", format='pdf')
+
+
 if key_word=="DOS":
     dop_list = [dop for dop,DoS in list_DoS_2]
     DOS_list = [DoS for dop,DoS in list_DoS_2]

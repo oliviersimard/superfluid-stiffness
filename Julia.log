@@ -1,7 +1,1 @@
 [info | Main]: Reading relevant data from averages*.dat or Loop*.dat files
-[info | Main]: Reading SEvec*.dat.npy files obtained from qcm
-[notice | Main]: Cumulant set to 0
-[notice | Main]: DOS set to 0
-[info | Main]: Entering decision loop regarding if NOCOEX or COEX. Integration over BZ or RBZ
-[notice | Main]: Other_U option set to 1
-[notice | Main]: Periodization option set to 1

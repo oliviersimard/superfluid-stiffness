@@ -41,6 +41,7 @@ Memento.config("debug";fmt="[{level}|{name}]:{msg}")
 data_file_s = open(readdlm, params["data_loop"][1])
 data_file = open(readdlm, params["data_loop"][2])
 data_file_U12 = open(readdlm, params["data_loop_U12"])
+#data_file_AFM_SC_renorm = open(readdlm, params["AFM_SC_NOCOEX_renormalization"])
 data_file_header = data_file[1,:]
 data_file_s_header = data_file_s[1,:]
 data_file_U12_header = data_file_U12[1,:]
@@ -53,46 +54,57 @@ data_file_U12_header = data_file_U12[1,:]
 setlevel!(logger, "info")
 info(logger, "Reading relevant data from averages*.dat or Loop*.dat files")
 indmu_s = find(x->x=="mu",data_file_s_header)
+inddop_s_cluster = find(x->x=="ave_mu_1",data_file_s_header)
 inddop_s = find(x->x=="ave_mu",data_file_s_header)
 indM_s = find(x->x=="ave_M",data_file_s_header)
 
 indmu = find(x->x=="mu",data_file_header)
+inddop_cluster = find(x->x=="ave_mu_1",data_file_header)
 inddop = find(x->x=="ave_mu",data_file_header)
 indM = find(x->x=="ave_M",data_file_header)
 
 indU12 = find(x->x=="mu",data_file_U12_header)
+inddopU12_cluster = find(x->x=="ave_mu_1",data_file_U12_header)
 inddopU12 = find(x->x=="ave_mu",data_file_U12_header)
 indMU12 = find(x->x=="ave_M",data_file_U12_header)
 
 data_file_s_mu = data_file_s[:,indmu_s]
+data_file_s_dop_cluster = data_file_s[:,inddop_s_cluster]
 data_file_s_dop = data_file_s[:,inddop_s]
 data_file_s_M = data_file_s[:,indM_s]
 
 data_file_mu = data_file[:,indmu]
+data_file_dop_cluster = data_file[:,inddop_cluster]
 data_file_dop = data_file[:,inddop]
 data_file_M = data_file[:,indM]
 
 data_file_mu_U12 = data_file_U12[:,indU12]
+data_file_dop_cluster_U12 = data_file_U12[:,inddopU12_cluster]
 data_file_dop_U12 = data_file_U12[:,inddopU12]
 data_file_M_U12 = data_file_U12[:,indMU12]
 
 #data_mu = data_file[:,index]
 data_file_s_mu = filter(x->x!="mu",data_file_s_mu)
+data_file_s_dop_cluster = filter(x->x!="ave_mu_1",data_file_s_dop_cluster)
 data_file_s_dop = filter(x->x!="ave_mu",data_file_s_dop)
 data_file_s_M = filter(x->x!="ave_M",data_file_s_M)
 data_file_s_mu = convert(Array{Float64,1}, data_file_s_mu)
 
 data_file_mu = filter(x->x!="mu",data_file_mu)
+data_file_dop_cluster = filter(x->x!="ave_mu_1",data_file_dop_cluster)
 data_file_dop = filter(x->x!="ave_mu",data_file_dop)
 data_file_M = filter(x->x!="ave_M",data_file_M)
 data_file_mu = convert(Array{Float64,1}, data_file_mu)
 
 data_file_mu_U12 = filter(x->x!="mu",data_file_mu_U12)
+data_file_dop_cluster_U12 = filter(x->x!="ave_mu_1",data_file_dop_cluster_U12)
 data_file_dop_U12 = filter(x->x!="ave_mu",data_file_dop_U12)
 data_file_M_U12 = filter(x->x!="ave_M",data_file_M_U12)
 
 datap_s = collect(zip(data_file_s_mu,data_file_s_dop))
+datap_s_cluster = collect(zip(data_file_s_mu,data_file_s_dop_cluster))
 datap = collect(zip(data_file_mu,data_file_dop))
+datap_cluster = collect(zip(data_file_mu,data_file_dop_cluster))
 #datap_new = [elem for elem in datap if isa(elem[2],Float64) && isa(elem[1],Float64)]
 
 #list_dop=[]
@@ -106,21 +118,26 @@ datap = collect(zip(data_file_mu,data_file_dop))
 #end
 
 datap_s_h = hcat(data_file_s_mu,data_file_s_dop)
+datap_s_h_cluster = hcat(data_file_s_mu,data_file_s_dop_cluster)
 #datap_s_h_sorted = sort(datap_s_h,1; alg=MergeSort)
 datap_other_U_h = hcat(data_file_mu_U12,data_file_dop_U12)
 datap_other_U_h = convert(Array{Float64,2},datap_other_U_h)
-println("datap_other_U_h = ", datap_other_U_h)
+datap_other_U_h_cluster = hcat(data_file_mu_U12,data_file_dop_cluster_U12)
+datap_other_U_h_cluster = convert(Array{Float64,2},datap_other_U_h_cluster)
+#println("datap_other_U_h = ", datap_other_U_h)
 datap_h = hcat(data_file_mu,data_file_dop)
+datap_h_cluster = hcat(data_file_mu,data_file_dop_cluster)
 #datap_h_sorted = sort(datap_h,1; alg=MergeSort)
 #println(datap_new_h_sorted)
 super_datap = vcat(datap_h,datap_s_h)
+super_datap_cluster = vcat(datap_h_cluster,datap_s_h_cluster)
 if print_mu_dop == 1
     if Other_U == 0
-        writedlm("stiffness.dat", super_datap, "\t\t")
+        writedlm("stiffness.dat", super_datap_cluster, "\t\t")
         print_with_color(:red, "Printed stiffness.dat for later use (SEvec_fig.py)\n")
         exit(0)
     elseif Other_U == 1
-        writedlm("stiffness.dat", datap_other_U_h, "\t\t")
+        writedlm("stiffness.dat", datap_other_U_h_cluster, "\t\t")
         print_with_color(:red, "Printed stiffness.dat for later use (SEvec_fig.py)\n")
         exit(0)
     end
@@ -203,6 +220,7 @@ println("list_t_mu_other_U = ", list_t_mu_other_U)
 
 super_list_SEvec_c = vcat(list_SEvec_c, list_SEvec_c_s)
 super_list_t_mu = vcat(list_t_mu,list_t_mu_s)
+println("super_list_t_mu = ", super_list_t_mu)
 
 ####################################################################################################################
 ##Verifying input validity##########################################################################################
@@ -248,16 +266,15 @@ if Other_U == 0
             for l in 1:length(super_list_t_mu)
                 modelvec = PeriodizeSC.ModelVector(super_list_t_mu[l][1], super_list_t_mu[l][2], super_list_t_mu[l][3], super_list_t_mu[l][4], zvec[1:w_discretization], super_list_SEvec_c[l][1, 1:w_discretization, :, :])
                 if cumulant == 1
-                    push!(list_kIntegral_stiff,0.5*PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_AFM_SC))
+                    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_AFM_SC))
                 elseif cumulant == 0
                     if DOS == 1
                         #push!(list_kIntegral_DOS,0.5*PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_kintegrand_DOS_k_coex))
-                        push!(list_kIntegral_DOS,0.5*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=75))
+                        push!(list_kIntegral_DOS,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=75))
                         println(size(list_kIntegral_DOS[l]))
                     elseif DOS == 0
                         #push!(list_kIntegral_stiff,0.5*PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test)) ##Differences if using calcintegral_RBZ (worst) or calcintegral_BZ
-                        push!(list_kIntegral_stiff,0.5*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_test,gridK=75))
-                        println(size(list_kIntegral_stiff[l]))
+                        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
                     end
                 end
             end
@@ -303,10 +320,9 @@ if Other_U == 0
                                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
 	                 #push!(list_kIntegral_stiff,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_test,gridK=50))
                             else 
-                                push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
+                                push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))
 	                 #push!(list_kIntegral_stiff,2.0*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_SC,gridK=50))
 	             end
-	             println(size(list_kIntegral_stiff[l]))
 	         end
                     end
                 end        
@@ -341,18 +357,40 @@ elseif Other_U == 1
         notice(logger, "Periodization option set to 1")
         for l in 1:length(list_t_mu_other_U)
             modelvec = PeriodizeSC.ModelVector(list_t_mu_other_U[l][1],list_t_mu_other_U[l][2],list_t_mu_other_U[l][3],list_t_mu_other_U[l][4],zvec[1:w_discretization],list_SEvec_c_other_U[l][1,1:w_discretization,:,:])
-            if m3.match == "NOCOEX"
+            if m3.match == "NOCOEX" && AFM_SC_NOCOEX == 0
+	 notice(logger, "AFM_SC_NOCOEX set to 0")
                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC))
+            elseif m3.match == "NOCOEX" && AFM_SC_NOCOEX == 1
+	 notice(logger, "AFM_SC_NOCOEX set to 1")
+	 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
             elseif m3.match == "COEX"
-                if abs(data_file_M_U12[l])>M_mean_field_tol
-                    push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
-                else
-	     push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC))
+	 if DOS == 1
+	     print_with_color(:red, "DOS option is equal to 1\n")
+	     if abs(data_file_M_U12[l])>M_mean_field_tol
+	         push!(list_kIntegral_DOS,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_coex,gridK=60))
+	     else
+	         push!(list_kIntegral_DOS,2.0*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_nocoex,gridK=60))
+	     end
+	 elseif DOS == 0
+                    if abs(data_file_M_U12[l])>M_mean_field_tol
+                        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
+                    else
+	         push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC))
+                    end
                 end
             end
         end
     elseif Periodization == 0
-        println("This part is under development")
+        setlevel!(logger, "notice")
+        notice(logger, "Periodization option set to 0")
+        for l in 1:length(list_t_mu_other_U)
+            modelvec = PeriodizeSC.ModelVector(list_t_mu_other_U[l][1],list_t_mu_other_U[l][2],list_t_mu_other_U[l][3],list_t_mu_other_U[l][4],zvec[1:w_discretization],list_SEvec_c_other_U[l][1,1:w_discretization,:,:])
+            if m3.match == "NOCOEX"
+	 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_cluster_G_kintegrand))
+            elseif m3.match == "COEX"
+                push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_cluster_G_kintegrand))
+            end
+        end
     end
 end
 
