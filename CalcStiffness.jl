@@ -28,7 +28,7 @@ if DOS == 1
     fout_name = params["fout_name_DOS"]
 elseif DOS == 0
     fout_name = params["fout_name"]
-else 
+else
     throw(ErrorException("DOS takes in either 0 or 1"))
 end
 
@@ -66,6 +66,7 @@ indM = find(x->x=="ave_M",data_file_header)
 indU12 = find(x->x=="mu",data_file_U12_header)
 inddopU12_cluster = find(x->x=="ave_mu_1",data_file_U12_header)
 inddopU12 = find(x->x=="ave_mu",data_file_U12_header)
+println("inddopU12: ", inddopU12)
 indMU12 = find(x->x=="ave_M",data_file_U12_header)
 
 data_file_s_mu = data_file_s[:,indmu_s]
@@ -81,6 +82,7 @@ data_file_M = data_file[:,indM]
 data_file_mu_U12 = data_file_U12[:,indU12]
 data_file_dop_cluster_U12 = data_file_U12[:,inddopU12_cluster]
 data_file_dop_U12 = data_file_U12[:,inddopU12]
+println("data_file_dop_U12",data_file_dop_U12)
 data_file_M_U12 = data_file_U12[:,indMU12]
 
 #data_mu = data_file[:,index]
@@ -99,11 +101,13 @@ data_file_mu = convert(Array{Float64,1}, data_file_mu)
 data_file_mu_U12 = filter(x->x!="mu",data_file_mu_U12)
 data_file_dop_cluster_U12 = filter(x->x!="ave_mu_1",data_file_dop_cluster_U12)
 data_file_dop_U12 = filter(x->x!="ave_mu",data_file_dop_U12)
+println("data_file_dop_U12", data_file_dop_U12)
 data_file_M_U12 = filter(x->x!="ave_M",data_file_M_U12)
 
 datap_s = collect(zip(data_file_s_mu,data_file_s_dop))
 datap_s_cluster = collect(zip(data_file_s_mu,data_file_s_dop_cluster))
 datap = collect(zip(data_file_mu,data_file_dop))
+println("datap",datap)
 datap_cluster = collect(zip(data_file_mu,data_file_dop_cluster))
 #datap_new = [elem for elem in datap if isa(elem[2],Float64) && isa(elem[1],Float64)]
 
@@ -120,6 +124,7 @@ datap_cluster = collect(zip(data_file_mu,data_file_dop_cluster))
 datap_s_h = hcat(data_file_s_mu,data_file_s_dop)
 datap_s_h_cluster = hcat(data_file_s_mu,data_file_s_dop_cluster)
 #datap_s_h_sorted = sort(datap_s_h,1; alg=MergeSort)
+println(data_file_mu_U12, data_file_dop_U12)
 datap_other_U_h = hcat(data_file_mu_U12,data_file_dop_U12)
 datap_other_U_h = convert(Array{Float64,2},datap_other_U_h)
 datap_other_U_h_cluster = hcat(data_file_mu_U12,data_file_dop_cluster_U12)
@@ -319,13 +324,13 @@ if Other_U == 0
                             if abs(super_data_M[l])>M_mean_field_tol
                                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_test))
 	                 #push!(list_kIntegral_stiff,PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_test,gridK=50))
-                            else 
+                            else
                                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC))
 	                 #push!(list_kIntegral_stiff,2.0*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.stiffness_SC,gridK=50))
 	             end
 	         end
                     end
-                end        
+                end
             end
         end
     elseif Periodization == 0
@@ -360,9 +365,12 @@ elseif Other_U == 1
             if m3.match == "NOCOEX" && AFM_SC_NOCOEX == 0
 	 notice(logger, "AFM_SC_NOCOEX set to 0")
                 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC))
-            elseif m3.match == "NOCOEX" && AFM_SC_NOCOEX == 1
+            elseif m3.match == "NOCOEX" && AFM_SC_NOCOEX == 1 && cumulant == 0
 	 notice(logger, "AFM_SC_NOCOEX set to 1")
 	 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
+            elseif m3.match == "NOCOEX" && AFM_SC_NOCOEX == 1 && cumulant == 1
+	 notice(logger, "AFM_SC_NOCOEX set to 1 while cumulant set to 1")
+	 push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_AFM_SC))
             elseif m3.match == "COEX"
 	 if DOS == 1
 	     print_with_color(:red, "DOS option is equal to 1\n")
@@ -372,12 +380,20 @@ elseif Other_U == 1
 	         push!(list_kIntegral_DOS,2.0*PeriodizeSC.sum_RBZ(modelvec,PeriodizeSC.DOS_k_nocoex,gridK=60))
 	     end
 	 elseif DOS == 0
-                    if abs(data_file_M_U12[l])>M_mean_field_tol
-                        push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
-                    else
-	         push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC))
+	     if cumulant == 1
+	         if abs(data_file_M_U12[l])>M_mean_field_tol
+                            push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_AFM_SC))
+	         else
+                            push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_cum_SC))
+	         end
+	     elseif cumulant == 0
+	         if abs(data_file_M_U12[l])>M_mean_field_tol
+                            push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_RBZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_test))
+                        else
+	             push!(list_kIntegral_stiff,PeriodizeSC.calcintegral_BZ(modelvec,PeriodizeSC.make_stiffness_kintegrand_SC))
+                        end
                     end
-                end
+	 end
             end
         end
     elseif Periodization == 0
@@ -408,7 +424,7 @@ if DOS == 1
         push!(stiffness,(1/beta)*real(stiffness_tmp))
         println((1/beta)*imag(stiffness_tmp))
     end
-elseif DOS == 0     
+elseif DOS == 0
     for j in 1:size(list_kIntegral_stiff)[1]-1
         stiffness_tmp = 0.0
         for ii in 1:size(list_kIntegral_stiff[j])[1]

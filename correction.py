@@ -4,15 +4,19 @@ from scipy.optimize import curve_fit
 
 tol = 1e-5
 filename = "stiffness_b70_w_200_coex_int_K_per_tperp_U12.dat"
-filename_to_write = "stiffness_b70_w_200_coex_int_K_per_tperp_U12__test.dat"
+filename_to_write = "stiffness/stiffness_b70_w_200_coex_int_K_per_tperp_U12__test_.dat"
 
 def fitting_function(x:float, a:float, b:float, c:float, d:float, e:float, f:float, g:float, h:float) -> float:
     return a*x + b*x**2 + c*x**3 + d*x**4 + e*x**5 + f*x**6 + g*x**7 + h
 
 NOCOEX_data = np.loadtxt("stiffness/stiffness_b70_w_200_nocoex_int_K_AFM_per_tperp_U12.dat",usecols=(1,2))
-AFM_SC_NOCOEX = np.loadtxt("stiffness_b70_w_200_coex_AFM_SC_1_int_K_per_tperp_U12.dat",usecols=(1,2))
+print("NOCOEX_data: ",NOCOEX_data)
+AFM_SC_NOCOEX = np.loadtxt("stiffness/stiffness_b70_w_200_coex_AFM_SC_1_int_K_per_tperp_U12.dat",usecols=(1,2))
+print("AFM_SC_NOCOEX: ",AFM_SC_NOCOEX)
 dop_M_data = np.loadtxt("COEX/U12/Loop_COEX_tmp.dat", skiprows=1, usecols=(2,4))
+print("dop_M_data: ",dop_M_data)
 COEX_data = np.loadtxt(filename, usecols=(1,2))
+print("COEX_data: ",COEX_data)
 COEX_data_cnc = np.loadtxt(filename_to_write, usecols=(1,2))
 
 print("COEX_data_cnc",COEX_data_cnc)

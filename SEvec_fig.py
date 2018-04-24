@@ -3,15 +3,17 @@ import matplotlib.pyplot as plt
 import os
 import re
 from fnmatch import fnmatch
-import itertools
-import copy
+#import itertools
+#import copy
 import warnings
+import SEvec_fig_util
+
 
 paths = './'
 pattern = "*.npy"
 file_dict = {}
 #tt=1500 #Pay attention to these values
-tt=200
+tt=400
 U=8
 beta=60
 key_fold1 = "./COEX/U8/SEvec/w_400/SEvec_b60_SC_AFM/SEvec_b60_SC_AFM"#/SEvec_b60_SC_AFM"#/SEvec_b70_SC" #folder in which the program will go fetch the data
@@ -35,7 +37,9 @@ for path, subdirs, files in os.walk(paths):
 print("file_array : ", file_array, "\n\n")
 regex1 = re.compile(r'(.*?)(?=_)')
 regex2 = re.compile(r'(.*?)(?=/)')
-print("regex2",regex2.findall(file_array[0]))
+print("regex2: ",regex2.findall(file_array[0]))
+
+
 file_array_s = []
 file_array_d = file_array.copy()
 if same_repository:
@@ -49,7 +53,7 @@ if same_repository:
         list_temp=[]
         for el in file_array:
             list_temp.append(int(regex.findall(el)[-1]))
-            
+
         list_temp_tot = [list(a) for a in zip(list_temp,file_array)]
         list_temp_tot.sort()
 
@@ -64,11 +68,11 @@ if same_repository:
         list_temp=[]
         for el in file_array:
             list_temp.append(int(regex.findall(el)[-1]))
-            
+
         list_temp_tot = [list(a) for a in zip(list_temp,file_array)]
         list_temp_tot.sort()
         list_temp_tot = np.asarray(list_temp_tot)
-        print("list_temp_tot",list_temp_tot)
+        #print("list_temp_tot",list_temp_tot)
 else:
     for el in file_array:
         if "s/SEvec" in regex1.findall(el):   ######Change if looking after Gvec or SEvec
@@ -98,9 +102,9 @@ else:
     #print("list_temp_tot_d = ", list_temp_tot_d)
     list_temp_tot_s = [list(a) for a in zip(list_temp_s,file_array_s)]
     list_temp_tot_s.sort()
-    #print("list_temp_tot_s = ", list_temp_tot_s)
+    print("list_temp_tot_d = ", list_temp_tot_d)
     list_temp_tot = np.vstack((list_temp_tot_d, list_temp_tot_s))
-    print("list_temp_tot = ",list_temp_tot)
+    #print("list_temp_tot = ",list_temp_tot)
 
 list_im_list = []
 list_re_list = []
@@ -143,8 +147,8 @@ else:
                 list_im_winf.append(np.imag(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
                 list_re_winf.append(np.real(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
             elif 'NOCOEX' in regex2.findall(file_array[0]):
-                list_im_winf.append(np.imag(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
-                list_re_winf.append(np.real(np.trace(file_dict[i][0,-1,0:2,0:2])).tolist())
+                list_im_winf.append(np.imag(np.trace(file_dict[i][0,-1,0,0])).tolist())
+                list_re_winf.append(np.real(np.trace(file_dict[i][0,-1,0,0])).tolist())
             #print("list_im_list_winf and list_re_list_winf :", len(list_im_list_winf),"\t",len(list_re_list_winf))
             #print("file_dict shape = ", file_dict[i].shape)
             for j in range(file_dict[i].shape[1]):
@@ -180,7 +184,7 @@ ax = plt.subplot(211)
 
 #xlabel = (r"$\omega$")
 if boool and key_word=="Not_DOS":
-    ylabel = (r"Im$\Sigma_{00}$"r"$\left(\omega\right)$")
+    ylabel = (r"Im$\Sigma_{%02d}$"r"$\left(\omega\right)$" % (1,))
 elif boool and key_word=="DOS":
     ylabel = (r"DOS")
 else:
@@ -260,7 +264,7 @@ elif key_word=="DOS":
 if boool and key_word=="Not_DOS":
     plt.title(r"Self-energy $\omega$-dependence at different dopings for $\beta = {0:2.2f}$".format(beta)) # at  " r"$\mu=%.2f$"%mu[0][0])
 elif boool and key_word=="DOS":
-    plt.title(r"DoS at different dopings for $\beta = {0:2.2f}$".format(beta))    
+    plt.title(r"DoS at different dopings for $\beta = {0:2.2f}$".format(beta))
 else:
     plt.title(r"Green's function $\omega$-dependence at different dopings for $\beta = {0:2.2f}$".format(beta))
 
@@ -321,7 +325,7 @@ if key_word=="DOS":
 else:
     for dop,self_array_re in list_self_array_re:
         if decide_curves==0:
-            ax2.plot(w_list, self_array_re[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_re),label=r"$\delta=%.5f$"%(dop))#, label="Re") 
+            ax2.plot(w_list, self_array_re[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_re),label=r"$\delta=%.5f$"%(dop))#, label="Re")
         elif decide_curves==1:
             ax2.plot(w_list, self_array_re[:,1], linestyle="-", marker='o', markersize=3, linewidth=2, color=next(color_2),label=r"$\delta=%.5f$"%(dop))
 
