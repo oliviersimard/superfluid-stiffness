@@ -6,6 +6,12 @@
 *.png
 *.pdf
 *.tar.gz
+*.h5
+*.log
 penetration_length.py
 COEX
 NOCOEX
+AFM/
+CTQMC_stiffness/
+build*
+dev
