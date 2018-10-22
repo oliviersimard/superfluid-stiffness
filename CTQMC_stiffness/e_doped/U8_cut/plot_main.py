@@ -33,8 +33,11 @@ if __name__ == '__main__':
     dict_ones, dict_lasts = pu.get_last_ones(dict_vals_files, "greenR", 10) # Should be Green's function if order parameter to be plotted
 
     #print("dict_ones: ", dict_ones)
+    pu.print_order_param_vs_dop_one_T(dict_ones, "greenR", 50, [-0.1,-0.2,-0.3])
 
-    pu.print_SC_order_parameter(dict_ones, "greenR")
+    #print(pu.get_SC_order_parameter(dict_ones, "greenR"))
+    
+    #pu.print_SC_order_parameter(dict_ones, "greenR")
 
     ## If you want to convert the Green's functions and self-energies into proper Nambu formalism, uncomment the following line. It is necessary to compute the superfluid stiffness. 
     ## Otherwise, comment.
@@ -44,5 +47,7 @@ if __name__ == '__main__':
     #pu.get_mean_plots(dict_vals_files, "greenR", 10, "g12_nambu_Re", "g12_nambu_Im") ## Can be a list. Input string is to specify which quantities to plot.
 
     #pu.get_mean_SC_order_parameter_plots(dict_ones, "greenR")
+
+    #pu.print_tp_cut_all_beta(dict_ones, "greenR", -0.2)
 
 exit(0)
