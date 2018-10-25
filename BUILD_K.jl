@@ -14,24 +14,19 @@ block_params = Dict{String,Any}(
     "data_loop" => params["data_loop"],
     "pattern" => params["pattern"], # Pattern of the files to be loaded
     "beta" => params["beta"],
-    "print_mu_dop" => params["Print_mu_dop"], # Parameter used to create stiffness.dat file (file used with SE_G$
+    "print_mu_dop" => params["Print_mu_dop"], # Parameter used to create stiffness.dat file (file used with SE_G)
     "w_discretization" => params["w_discretization"], # Matsubara frequency grid
     "AFM_SC_NOCOEX" => params["AFM_SC_NOCOEX"],
-    "DOS" => params["DOS"],
     "cumulant" => params["cumulant"],
     "Periodization" => params["Periodization"],
     "fout_name" => params["fout_name"],
-    "fout_name_DOS" => params["fout_name_DOS"],
-    "abc" => params["abc"],
     "inplane_axis" => params["inplane_axis"]
     )
 
-super_data_M, super_datap, list_of_files, datap = Stiffness.read_data_loop(block_params,block_params["print_mu_dop"],block_params["pattern"])
+super_data_M, super_datap, list_of_files = Stiffness.read_data_loop(block_params,block_params["print_mu_dop"],block_params["pattern"])
 
 #println(length(super_data_M),"\n",super_datap[1],"\n",list_of_files[1],"\n",datap)
 
-list_of_files = list_of_files[1] #<------------------------ Absolutely change this since the code won't treat the cases in which the data is sparse -------------------------------
-super_datap = super_datap[1] # <----------------------------------------------------------------------------------------------------------------------------------------------------
 list_modulevec = Stiffness.gen_modulevec_args(block_params,list_of_files,super_datap[:,1],params)
 println("super_data_M: ", typeof(super_data_M))
 
@@ -80,7 +75,6 @@ elseif match_data_loop == "NOCOEX" && block_params["Periodization"] == 0
     end
 end
 
-#fct_array = fill(PeriodizeSC.tperp,9)
 println(fct_array)
 k_array_prebuild = Array{Array{Float64,2},1}()
 stiff_array = Array{Float64,1}()
@@ -100,7 +94,7 @@ tktilde_prebuild = Array{Array{Complex{Float64},2},2}(0,0)
         tktilde_prebuild = PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,l),Grid_,PeriodizeSC.tktilde)
     end
     println("k_array_prebuild: ", typeof(k_array_prebuild))
-    println("l :",l)
+    println("Iteration number: ",l)
     arr_w_kIntegrated = Matrix{Complex{Float64}}(0,0)
     if match_data_loop == "COEX" && block_params["Periodization"] == 0
         @time arr_w_kIntegrated = PeriodizeSC.stiffness_cluster_G_ab_k_grid(modelvec, k_array_prebuild, tktilde_prebuild, Grid_)    
@@ -109,7 +103,7 @@ tktilde_prebuild = Array{Array{Complex{Float64},2},2}(0,0)
     elseif match_data_loop == "NOCOEX" && block_params["Periodization"] == 1
         @time arr_w_kIntegrated = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec, k_array_prebuild, tktilde_prebuild, Grid_, block_params["cumulant"], block_params["AFM_SC_NOCOEX"])
     end
-    dop_stiff = 1/beta*sum(arr_w_kIntegrated[:,2])
+    dop_stiff = 1.0/beta*sum(arr_w_kIntegrated[:,2])
     f = open(params["fout_name"], "a")
     if l == 1
         write(f, "#Grid "*"$(Grid_)"*"\n")
@@ -120,4 +114,4 @@ tktilde_prebuild = Array{Array{Complex{Float64},2},2}(0,0)
     println(dop_stiff)
 end
 println("Superfluid Stiffness: ", stiff_array)
-#writedlm("hey.dat",stiff_array)
+
