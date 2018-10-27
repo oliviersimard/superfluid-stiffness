@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from plot_utilities import container
 
 ############################# Important parameters for the plots ######################################
-path_to_file_ = "PER_periodized_unitary_transformation_yy.dat"
+path_to_file_ = "CUM_periodized_unitary_transformation_newer.dat"
 beta_to_plot = 1.0/50
 tp_arr = np.array([-0.1,-0.2,-0.3],dtype=float)
 tp_cut = -0.3
@@ -72,7 +72,7 @@ for tp_val in dict_vals.keys():
     ax_3.annotate(r"max $\rho_s=%.3f$"%(max_rho), xy=(max_doping, max_rho), xytext=(max_doping-0.023, max_rho-0.01),
             arrowprops=dict(facecolor='black', shrink=0.05, width=0.05, headwidth=3, headlength=3),
             )
-
+plt.legend()
 # Plot for order parameter
 fig_4 = plt.figure(4)
 ax_4 = fig_4.add_subplot(111)
@@ -90,7 +90,7 @@ for i,tp_val in enumerate(dict_vals.keys()):
     #ax_4.annotate(r"max $\left|\phi\right|=%.3f$"%(max_order_param), xy=(max_doping, max_order_param), xytext=(max_doping-0.03, max_order_param-0.01),
     #        arrowprops=dict(facecolor='black', shrink=0.05, width=0.05, headwidth=3, headlength=3),
     #        )
-
+plt.legend()
 ########## Plot showing the behavior of both order parameter maxima and superfluid stiffness maxima for each tp as a function of doping ###########
 
 fig_5 = plt.figure(5)
@@ -102,6 +102,7 @@ ax_5.plot(max_dop_list_stiff,tp_arr,linestyle="-",marker='.',markersize=2,linewi
 ax_5.plot(max_dop_list_order,tp_arr,linestyle="-",marker='.',markersize=2,linewidth=1,color='blue',label=r"max $\left|\phi\right|$")
 ax_5.plot(max_dop_list,tp_arr,linestyle="-",marker='.',markersize=2,linewidth=1,color='green',label=r"max $n$")
 
+plt.legend()
 ######### Plot showing difference between maximum doping and doping at which the superfluid stiffness is maximum, as a function of T #############
 
 beta_diff = []

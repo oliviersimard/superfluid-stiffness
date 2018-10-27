@@ -4,14 +4,14 @@ using Glob
 
 # You have to run convert_converged_green() before running this program properly (produce both selfR and greenR)
 
-filename_to_write = "PER_periodized_unitary_transformation_.dat"
+filename_to_write = "PER_periodized_unitary_transformation_xx_newer.dat"
 
 t = 1.0; tpp = 0.0
 pwd_ = pwd()
 path_ = pwd_*"/"*filename_to_write
 Grid_ = 100 # Resolution of k-space that is relevant ONLY for inplane calculations
 OPT_ = "PER"  #Options are CUM, PER and TR
-AXIS_ = "zz" #Options are xx (a axis), yy (b axis) and zz (c axis)
+AXIS_ = "xx" #Options are xx (a axis), yy (b axis) and zz (c axis)
 
 macro assertion(ex, text)
     :($ex ? nothing : error("Assertion failed: ", $(text)))
@@ -109,12 +109,14 @@ list_Kintegral_stiff = Array{Tuple{Tuple{Float64,Float64,Float64,Float64},Array{
 list_Kintegral_DOS = Array{Tuple{Tuple{Float64,Float64,Float64,Float64},Array{Complex{Float64},2}},1}()
 list_mu = Array{Float64,1}(); list_U = Array{Float64,1}(); list_beta = Array{Float64,1}(); list_gap = Array{Float64,1}()
 list_tp = Array{Float64,1}(); list_N = Array{Float64,1}()
-for l in 1:1:length(list_of_npy_GE_files_todo)
+@time for l in 1:1:length(list_of_npy_GE_files_todo)
     dir_name_l = dirname(list_of_npy_GE_files_todo[l])
     SEvec = npzread(list_of_npy_SE_files_todo[l])
     println("SEvec: ",size(SEvec),"\n")
     GEvec = npzread(list_of_npy_GE_files_todo[l])
     println("GEvec: ",size(GEvec),"\n")
+    len_iwn_G = size(GEvec)[1]; len_iwn_SE = size(SEvec)[1]
+    len_iwn_G != len_iwn_SE && throw(ErrorException("Must have same number of Matsubara frequencies for self-energy and Green's function!"))
     N_data = readdlm(dir_name_l*"/"*"N.dat")
     list_green_npy = glob(dir_name_l*"/greenR*.npy")
     list_green_npy = Array{String,1}([dir_name for dir_name in list_green_npy if !contains(dir_name,"greenR_aver")])
@@ -144,15 +146,15 @@ for l in 1:1:length(list_of_npy_GE_files_todo)
         println("zz")
         if OPT_ == "PER"
             println("PER")
-            cal = PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC)  ## cal variable exits an array whose size is (length(iw_n),2). The second column holds the superfluid stiffness data.
+            cal = PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_SC, len_sEvec_c=len_iwn_G)  ## cal variable exits an array whose size is (length(iw_n),2). The second column holds the superfluid stiffness data.
             println("cal: ", cal)
         elseif OPT_ == "CUM"
             println("CUM")
-            cal = PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_cum_SC) ## Idem cal
+            cal = PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_kintegrand_cum_SC, len_sEvec_c=len_iwn_G) ## Idem cal
             println("cal: ", cal)
         elseif OPT_ == "TR"
             println("TR")
-            cal = PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_trace_G_kintegrand) ## Idem cal
+            cal = PeriodizeSC.calcintegral_BZ(modelvec, PeriodizeSC.make_stiffness_trace_G_kintegrand, len_sEvec_c=len_iwn_G) ## Idem cal
         end
     elseif AXIS_ == "yy"
         println("yy")
@@ -160,13 +162,13 @@ for l in 1:1:length(list_of_npy_GE_files_todo)
         for f in fct_array
             push!(k_array_prebuild, PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,1),Grid_,f))
         end
+        tktilde_prebuild = PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,1),Grid_,PeriodizeSC.tktilde)
         if OPT_ == "PER"
             println("PER")
-            tktilde_prebuild = PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,1),Grid_,PeriodizeSC.tktilde)
-            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,tktilde_prebuild,Grid_,0,0)
+            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,tktilde_prebuild,Grid_,0,0,len_sEvec_c=len_iwn_G)
         elseif OPT_ == "CUM"
             println("CUM")
-            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,Grid_,1,0)
+            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,tktilde_prebuild,Grid_,1,0,len_sEvec_c=len_iwn_G)
         end
     elseif AXIS_ == "xx"
         println("xx")
@@ -174,13 +176,13 @@ for l in 1:1:length(list_of_npy_GE_files_todo)
         for f in fct_array
             push!(k_array_prebuild, PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,1),Grid_,f))
         end
+        tktilde_prebuild = PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,1),Grid_,PeriodizeSC.tktilde)
         if OPT_ == "PER"
             println("PER")
-            tktilde_prebuild = PeriodizeSC.k_grid(PeriodizeSC.Model(modelvec,1),Grid_,PeriodizeSC.tktilde)
-            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,tktilde_prebuild,Grid_,0,0)
+            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,tktilde_prebuild,Grid_,0,0,len_sEvec_c=len_iwn_G)
         elseif OPT_ == "CUM"
             println("CUM")
-            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,Grid_,1,0)
+            cal = PeriodizeSC.stiffness_NOCOEX_Per_Cum_ab_k_grid(modelvec,k_array_prebuild,tktilde_prebuild,Grid_,1,0,len_sEvec_c=len_iwn_G)
         end
     end
     push!(list_Kintegral_stiff,(params_tuple,cal))
